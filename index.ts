@@ -4,7 +4,7 @@ import { Options } from "selenium-webdriver/chrome.js";
 const options = new Options()
 
 options.excludeSwitches("disable-component-update")
-options.addArguments("--log-level=3", "--mute-audio", "--no-sandbox")
+options.addArguments("--log-level=3", "--mute-audio", "--no-sandbox", "--disable-dev-shm-usage")
 
 if (process.env.NODE_ENV === 'development') {
     require('dotenv').config();
