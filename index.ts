@@ -1,3 +1,4 @@
+import "chromedriver"
 import webdriver, { Browser } from "selenium-webdriver"
 import { Options } from "selenium-webdriver/chrome.js";
 
@@ -37,22 +38,28 @@ const start = async (user: string[]) => {
     await waitForPageLoad(driver)
     // wait for accept cookies button to appear
     await driver.wait(webdriver.until.elementLocated(webdriver.By.id("onetrust-accept-btn-handler")))
-    await driver.sleep(2000)
+    await driver.sleep(3000)
     // accept cookies
     await driver.findElement(webdriver.By.id("onetrust-accept-btn-handler")).click()
     await driver.sleep(2000)
 
     // wait for playback button to appear
-    await driver.wait(webdriver.until.elementLocated(webdriver.By.css('button[data-encore-id="buttonPrimary"].futnNt')))
+    await driver.wait(webdriver.until.elementLocated(webdriver.By.css('button[data-encore-id="buttonPrimary"]')))
 
     while (1) {
         // click unchecked shuffle button
-        await driver.findElement(webdriver.By.css('button[aria-label="Enable shuffle"]')).then((el) => { el.click() }, () => { })
+        await driver.findElement(webdriver.By.css('button[aria-label="Enable shuffle"][aria-checked="false"]')).then((el) => { el.click() }, () => { })
         // click unchecked repeat button
-        await driver.findElement(webdriver.By.css('button[aria-label="Enable repeat"]')).then((el) => { el.click() }, () => { })
+        await driver.findElement(webdriver.By.css('button[aria-label="Enable repeat"][aria-checked="false"]')).then((el) => { el.click() }, () => { })
 
-        // start playback if not playing
-        await driver.findElement(webdriver.By.css('button[data-encore-id="buttonPrimary"][aria-label="Play"].futnNt')).then((el) => { el.click() }, () => { })
+        // start playback if not playing button data-testid="play-button" aria-label="Play Ja" data-encore-id="buttonPrimary" 
+        await driver.findElement(webdriver.By.xpath('(.//button[@data-encore-id="buttonPrimary"][@data-testid="play-button"])[2]')).then((el) => {
+            el.getAttribute("aria-label").then((label) => {
+                if (label.startsWith("Play")) {
+                    el.click()
+                }
+            })
+        }, () => { })
 
         // unmute if muted
         await driver.findElement(webdriver.By.css('button[aria-label="Unmute"]')).then((el) => el.click(), () => { })

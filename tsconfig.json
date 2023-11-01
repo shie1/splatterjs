@@ -2,7 +2,6 @@
 {
     "compilerOptions": {
       "target": "ES5",
-      "watch": true,
       "esModuleInterop": true
     },
     "exclude": [
