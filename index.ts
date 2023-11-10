@@ -5,7 +5,13 @@ import { Options } from "selenium-webdriver/chrome.js";
 const options = new Options()
 
 options.excludeSwitches("disable-component-update")
-options.addArguments("--log-level=3", "--mute-audio", "--no-sandbox", "--disable-dev-shm-usage")
+options.addArguments(
+    "--log-level=3",
+    "--mute-audio",
+    "--no-sandbox",
+    "--disable-dev-shm-usage",
+    "--window-size=1280x1024"
+)
 
 if (process.env.NODE_ENV === 'development') {
     require('dotenv').config();
@@ -73,8 +79,8 @@ const start = async (user: string[]) => {
             }
         }
 
-        // wait 1 second
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        // wait 3 seconds
+        await new Promise((resolve) => setTimeout(resolve, 3000))
     }
 }
 

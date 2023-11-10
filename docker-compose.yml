@@ -1,0 +1,10 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - USERS=user1:password1;user2:password2 # required, user:password;user:password
+      - TARGET=your_target # required, any playable spotify uri
+      - SKIP=35 # optional, recommended is 35
