@@ -28,6 +28,5 @@ ENV DBUS_SESSION_BUS_ADDRESS=/dev/null
 # Make the docker-entrypoint.sh script executable
 RUN chmod a+x docker-entrypoint.sh
 
-
 # Serve the app
 ENTRYPOINT ["bash", "docker-entrypoint.sh", "yarn", "start"]
