@@ -16,11 +16,11 @@ COPY package.json yarn.lock ./
 # Install dependencies with yarn
 RUN yarn --network-timeout 1000000
 
-# Build the app
-RUN yarn build
-
 # Copy the rest of the code
 COPY . .
+
+# Build the app
+RUN yarn build
 
 # Select xvfb as the default virtual screen
 ENV DISPLAY=:99
