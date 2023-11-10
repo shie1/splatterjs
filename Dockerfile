@@ -1,11 +1,22 @@
-# Use Node.js 21 as the base image
-FROM node:21
+# Use the appropriate base image based on the architecture
+ARG ARCH
+FROM node:21${ARCH:+-$ARCH}
 
 # Install Google Chrome
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | tee /etc/apt/sources.list.d/google-chrome.list \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable xvfb
+RUN if [ "$ARCH" = "amd64" ]; then \
+        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+        && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | tee /etc/apt/sources.list.d/google-chrome.list \
+        && apt-get update \
+        && apt-get install -y google-chrome-stable xvfb; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+        && echo "deb [arch=arm64] http://dl.google.com/linux/chrome/deb/ stable main" | tee /etc/apt/sources.list.d/google-chrome.list \
+        && apt-get update \
+        && apt-get install -y google-chrome-stable xvfb; \
+    else \
+        echo "Unsupported architecture: $ARCH"; \
+        exit 1; \
+    fi
 
 # Set the working directory
 WORKDIR /app
@@ -27,7 +38,6 @@ ENV DBUS_SESSION_BUS_ADDRESS=/dev/null
 
 # Make the docker-entrypoint.sh script executable
 RUN chmod a+x docker-entrypoint.sh
-
 
 # Serve the app
 ENTRYPOINT ["bash", "docker-entrypoint.sh", "yarn", "start"]
