@@ -16,7 +16,7 @@ git clone https://github.com/shie1/splatterjs
 yarn install
 ```
 
-3. Set the following environment variables
+3. Set the following environment variables in a .env file
 ```bash
 USERS=user1:password1;user2:password2
 TARGET=target_value
@@ -26,7 +26,7 @@ The `TARGET` variable should contain a playable spotify url.
 
 4. Run the project
 ```bash
-yarn start
+yarn dev
 ```
 
 ## Development

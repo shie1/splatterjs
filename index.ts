@@ -33,6 +33,7 @@ const waitForPageLoad = async (driver: webdriver.WebDriver) => {
 const start = async (user: string[]) => {
     const driver = new webdriver.Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build();
     driver.get("https://google.com/search?q=spotify")
+    await waitForPageLoad(driver)
     driver.get(`https://accounts.spotify.com/en/login?continue=${encodeURIComponent(args.target)}`)
     await waitForPageLoad(driver)
     const email = await driver.findElement(webdriver.By.id("login-username"))
