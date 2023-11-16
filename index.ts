@@ -2,7 +2,28 @@ import "chromedriver"
 import webdriver, { Browser } from "selenium-webdriver"
 import { Options } from "selenium-webdriver/chrome.js";
 
+import express from "express"
+
 const options = new Options()
+
+let globalIterator = 0
+const globalState: {
+    [key: string]: SessionState,
+} = {
+}
+
+export type Song = {
+    title: string,
+    artist: string,
+}
+
+export type SessionState = {
+    username: string,
+    currentSong: Song,
+    streams: number,
+    playbackTime: number, // seconds
+    target: string,
+}
 
 options.excludeSwitches("disable-component-update")
 options.addArguments(
@@ -20,7 +41,8 @@ if (process.env.NODE_ENV === 'development') {
 const args = {
     users: process.env.USERS.split(';').map((user) => user.split(':')),
     target: process.env.TARGET,
-    skip: process.env.SKIP ? parseInt(process.env.SKIP) : 0
+    skip: 35,
+    port: process.env.PORT || 3000,
 }
 
 const waitForPageLoad = async (driver: webdriver.WebDriver) => {
@@ -30,11 +52,22 @@ const waitForPageLoad = async (driver: webdriver.WebDriver) => {
     });
 }
 
-const start = async (user: string[]) => {
+const start = async (user: string[], target: string, sessionId: number) => {
+    globalState[sessionId] = {
+        username: user[0],
+        currentSong: {
+            title: "",
+            artist: "",
+        },
+        streams: 0,
+        playbackTime: 0,
+        target
+    }
+
     const driver = new webdriver.Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build();
     driver.get("https://google.com/search?q=spotify")
     await waitForPageLoad(driver)
-    driver.get(`https://accounts.spotify.com/en/login?continue=${encodeURIComponent(args.target)}`)
+    driver.get(`https://accounts.spotify.com/en/login?continue=${encodeURIComponent(target)}`)
     await waitForPageLoad(driver)
     const email = await driver.findElement(webdriver.By.id("login-username"))
     const password = await driver.findElement(webdriver.By.id("login-password"))
@@ -76,15 +109,94 @@ const start = async (user: string[]) => {
             const progress = await driver.findElement(webdriver.By.className('playback-bar__progress-time-elapsed')).then(async (el) => { return ((await el.getText()).split(":").map((e, i) => i == 0 ? parseInt(e) * 60 : parseInt(e))).reduce((partialSum, a) => partialSum + a, 0) }, () => { return 0 })
             if (progress > args["skip"]) {
                 // skip to next song
+                if(globalState[sessionId]) {
+                    globalState[sessionId].streams++
+                }
                 await driver.findElement(webdriver.By.css('button[aria-label="Next"]')).then((el) => { el.click() }, () => { })
             }
         }
+
+        // update to globalState
+        const currentSong = await driver.findElement(webdriver.By.css('div[data-testid="now-playing-widget"]')).then(async (el) => {
+            // [data-testid="now-playing-widget"]'s aria label is "Now playing: {title} by {artist}"
+            const ariaLabel = await el.getAttribute("aria-label")
+            const title = ariaLabel.split(" by ")[0].split(": ")[1]
+            const artist = ariaLabel.split(" by ")[1]
+            return { title, artist }
+        }, () => { return { title: "", artist: "" } })
+        // get playback time from progress bar
+        const playbackTime = await driver.findElement(webdriver.By.className('playback-bar__progress-time-elapsed')).then(async (el) => { 
+            return ((await el.getText()).split(":").map((e, i) => i == 0 ? parseInt(e) * 60 : parseInt(e))).reduce((partialSum, a) => partialSum + a, 0) 
+        }, () => { return 0 })
+
+        if(!globalState[sessionId]) {
+            driver.quit()
+            break
+        }
+        const username = user[0]
+        const streams = globalState[sessionId] ? globalState[sessionId].streams : 0
+        globalState[sessionId] = {
+            username,
+            currentSong,
+            streams,
+            playbackTime,
+            target
+        }
+        console.log(`[${sessionId}] ${username} - ${currentSong.title} - ${currentSong.artist} - ${playbackTime} - ${streams}`)
 
         // wait 3 seconds
         await new Promise((resolve) => setTimeout(resolve, 3000))
     }
 }
 
-for (let user of args.users) {
-    start(user)
-}
+const app = express()
+
+app.get("/", (req, res) => {
+    res.json(globalState)
+})
+
+app.get("/session/:id", (req, res) => {
+    const id = req.params.id
+    if (globalState[id]) {
+        res.json(globalState[id])
+    } else {
+        res.status(404).send("Session not found")
+    }
+})
+
+app.get("/start/:type/:id", (req, res) => {
+    const target = `/${req.params.type}/${req.params.id}`
+    // check if target is /playlist|album|artist etc/id
+    if (!target.match(/\/(playlist|album|artist|track)\/[a-zA-Z0-9]+/)) {
+        res.status(400).send("Invalid target")
+        return
+    }
+
+    const user = args.users.filter((user) => {
+        // if used by an session in globalState, return false
+        if (Object.values(globalState).filter((state) => state.username == user[0]).length > 0) {
+            return false
+        }
+        return true
+    })[0]
+    if(!user) {
+        res.status(400).send("No more users available")
+        return
+    }
+    start(user, `https://open.spotify.com${target}`, globalIterator++)
+    res.send(`Started session for ${user[0]}`)
+})
+
+app.get("/stop/:id", (req, res) => {
+    const id = req.params.id
+    if (globalState[id]) {
+        delete globalState[id]
+        res.send("Session stopped")
+    } else {
+        res.status(404).send("Session not found")
+    }
+})
+
+app.listen(args.port, () => {
+    console.log(`Listening on port ${args.port}`)
+})
