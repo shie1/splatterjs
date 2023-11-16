@@ -187,6 +187,30 @@ app.get("/start/:type/:id", (req, res) => {
     res.send(`Started session for ${user[0]}`)
 })
 
+app.get("/users", (req, res) => {
+    res.json(args.users.map((user) => {
+        const sessionId = Object.keys(globalState).filter((key) => globalState[key].username == user[0])[0]
+        return {
+            username: user[0],
+            sessionId,
+        }
+    }))
+})
+
+app.get("/users/:username", (req, res) => {
+    const username = req.params.username
+    const user = args.users.filter((user) => user[0] == username)[0]
+    if(!user) {
+        res.status(404).send("User not found")
+        return
+    }
+    const session = Object.values(globalState).filter((state) => state.username == username)[0]
+    res.json({
+        username,
+        session,
+    })
+})
+
 app.get("/stop/:id", (req, res) => {
     const id = req.params.id
     if (globalState[id]) {
@@ -195,6 +219,13 @@ app.get("/stop/:id", (req, res) => {
     } else {
         res.status(404).send("Session not found")
     }
+})
+
+app.get("/stopall", (req, res) => {
+    Object.keys(globalState).forEach((key) => {
+        delete globalState[key]
+    })
+    res.send("All sessions stopped")
 })
 
 app.listen(args.port, () => {
