@@ -1,6 +1,7 @@
 import "chromedriver"
 import webdriver, { Browser } from "selenium-webdriver"
 import { Options } from "selenium-webdriver/chrome.js";
+import { readFileSync, writeFileSync,existsSync } from "fs";
 
 import express from "express"
 
@@ -40,10 +41,21 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const args = {
-    users: process.env.USERS.split(';').map((user) => user.split(':')),
-    target: process.env.TARGET,
+    users: [],
     skip: 35,
-    port: process.env.PORT || 3000,
+    port: process.env.PORT || 8080,
+}
+
+if(existsSync("users.json")){
+    args.users = JSON.parse(readFileSync("users.json").toString())
+}else{
+    if(process.env.USERS) {
+        args.users = process.env.USERS.split(",").map((user) => user.split(":"))
+    }
+    writeFileSync("users.json", JSON.stringify(args.users.map((user)=> ({
+        username: user[0],
+        password: user[1],
+    }))))
 }
 
 const waitForPageLoad = async (driver: webdriver.WebDriver) => {
@@ -204,6 +216,21 @@ app.get("/users", (req, res) => {
             sessionId,
         }
     }))
+})
+
+app.post("/useradd", (req, res) => {
+    const username = req.query.username
+    const password = req.query.password
+    if (!username || !password) {
+        res.status(400).send("Missing username or password")
+        return
+    }
+    args.users.push([username, password])
+    writeFileSync("users.json", JSON.stringify(args.users.map((user)=> ({
+        username: user[0],
+        password: user[1],
+    }))))
+    res.send("User added")
 })
 
 app.get("/users/:username", (req, res) => {
