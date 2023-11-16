@@ -15,6 +15,7 @@ const globalState: {
 export type Song = {
     title: string,
     artist: string,
+    coverImageUrl?: string,
 }
 
 export type SessionState = {
@@ -91,6 +92,8 @@ const start = async (user: string[], target: string, sessionId: number) => {
         await driver.findElement(webdriver.By.css('button[aria-label="Enable shuffle"][aria-checked="false"]')).then((el) => { el.click() }, () => { })
         // click unchecked repeat button
         await driver.findElement(webdriver.By.css('button[aria-label="Enable repeat"][aria-checked="false"]')).then((el) => { el.click() }, () => { })
+        // open now playing widget
+        await driver.findElement(webdriver.By.css('button[data-testid="control-button-npv"][aria-pressed="false"]')).then((el)=>{el.click()}, ()=>{})
 
         // start playback if not playing button data-testid="play-button" aria-label="Play Ja" data-encore-id="buttonPrimary" 
         await driver.findElement(webdriver.By.xpath('(.//button[@data-encore-id="buttonPrimary"][@data-testid="play-button"])[2]')).then((el) => {
@@ -122,7 +125,13 @@ const start = async (user: string[], target: string, sessionId: number) => {
             const ariaLabel = await el.getAttribute("aria-label")
             const title = ariaLabel.split(" by ")[0].split(": ")[1]
             const artist = ariaLabel.split(" by ")[1]
-            return { title, artist }
+            // coverImageUrl: aside[aria-label="Now Playing View"] img[data-testid="cover-art-image"]
+            const coverImageUrl = await driver.findElement(webdriver.By.css('aside[aria-label="Now Playing view"] img[data-testid="cover-art-image"]')).then((el) => { return el.getAttribute("src") }, () => { return "" })
+            return { 
+                title, 
+                artist,
+                coverImageUrl,
+            }
         }, () => { return { title: "", artist: "" } })
         // get playback time from progress bar
         const playbackTime = await driver.findElement(webdriver.By.className('playback-bar__progress-time-elapsed')).then(async (el) => { 
