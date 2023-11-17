@@ -244,10 +244,6 @@ app.get("/multistart/:users/:type/:id", (req,res) => {
         return
     }
 
-    // for(let i = 0; i < threads; i++) {
-    //     start(users[i], `https://open.spotify.com${target}`, globalIterator++)
-    // }
-    //start one every 5 seconds
     let i = 0
     const interval = setInterval(() => {
         if(i >= threads) {
@@ -257,7 +253,7 @@ app.get("/multistart/:users/:type/:id", (req,res) => {
         }
         start(users[i], `https://open.spotify.com${target}`, globalIterator++)
         i++
-    }, 5000)
+    }, 1500)
     
     res.status(200).send(`Started ${threads} sessions`)
 })
