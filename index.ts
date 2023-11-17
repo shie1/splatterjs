@@ -253,9 +253,7 @@ app.get("/multistart/:users/:type/:id", (req,res) => {
         }
         start(users[i], `https://open.spotify.com${target}`, globalIterator++)
         i++
-    }, 1500)
-    
-    res.status(200).send(`Started ${threads} sessions`)
+    }, 1500)    
 })
 
 app.get("/users", (req, res) => {
