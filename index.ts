@@ -54,7 +54,7 @@ if(existsSync("users.json")){
     }) => [user.username, user.password])
 }else{
     if(process.env.USERS) {
-        args.users = process.env.USERS.split(",").map((user) => user.split(":"))
+        args.users = process.env.USERS.split(";").map((user) => user.split(":"))
     }
     writeFileSync("users.json", JSON.stringify(args.users.map((user)=> ({
         username: user[0],
