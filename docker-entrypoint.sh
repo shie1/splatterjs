@@ -7,7 +7,7 @@ export DBUS_SESSION_BUS_ADDRESS=/dev/null
 
 echo "Starting X virtual framebuffer (Xvfb) in background..."
 
-killall chrome
+pkill chrome
 
 Xvfb -ac :99 -screen 0 1280x1024x16 > /dev/null 2>&1 &
 
