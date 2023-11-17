@@ -47,7 +47,11 @@ const args = {
 }
 
 if(existsSync("users.json")){
-    args.users = JSON.parse(readFileSync("users.json").toString())
+    // json is [{username,password}], convert it to [[username,password]]
+    args.users = JSON.parse(readFileSync("users.json").toString()).map((user: {
+        username: string,
+        password: string,
+    }) => [user.username, user.password])
 }else{
     if(process.env.USERS) {
         args.users = process.env.USERS.split(",").map((user) => user.split(":"))
