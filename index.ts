@@ -212,6 +212,45 @@ app.get("/start/:type/:id", (req, res) => {
     res.send(`Started session for ${user[0]}`)
 })
 
+// start multiple session
+app.get("/multistart/:users/:type/:id", (req,res) => {
+    const target = `/${req.params.type}/${req.params.id}`
+    // check if target is /playlist|album|artist etc/id
+    if (!target.match(/\/(playlist|album|artist|track)\/[a-zA-Z0-9]+/)) {
+        res.status(400).send("Invalid target")
+        return
+    }
+
+    
+    //users is a count, if set to "available" it will use all available users
+    const users = args.users.filter((user) => {
+        // if used by an session in globalState, return false
+        if (Object.values(globalState).filter((state) => state.username == user[0]).length > 0) {
+            return false
+        }
+        return true
+    })
+    let threads: number
+    if(req.params.users == "available") {
+        threads = users.length
+    }else {
+        threads = parseInt(req.params.users)
+    }
+    if(threads > users.length) {
+        threads = users.length
+    }
+    if(threads == 0) {
+        res.status(400).send("No more users available")
+        return
+    }
+
+    for(let i = 0; i < threads; i++) {
+        start(users[i], `https://open.spotify.com${target}`, globalIterator++)
+    }
+    
+    res.status(200).send(`Started ${threads} sessions`)
+})
+
 app.get("/users", (req, res) => {
     res.json(args.users.map((user) => {
         const sessionId = Object.keys(globalState).filter((key) => globalState[key].username == user[0])[0]
