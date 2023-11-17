@@ -32,4 +32,4 @@ ENV DBUS_SESSION_BUS_ADDRESS=/dev/null
 RUN chmod a+x docker-entrypoint.sh
 
 # Serve the app
-ENTRYPOINT ["pkill", "chrome", "&&", "bash", "docker-entrypoint.sh", "yarn", "start"]
+ENTRYPOINT ["bash", "docker-entrypoint.sh", "yarn", "start"]
